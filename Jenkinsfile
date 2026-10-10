@@ -21,7 +21,25 @@ pipeline {
 
         stage('Run new container') {
             steps {
-                sh 'docker run -d --name $CONTAINER_NAME -p 5020:8000 $IMAGE_NAME'
+                withCredentials([
+                    string(credentialsId: 'db-host',        variable: 'DB_HOST'),
+                    string(credentialsId: 'db-user',        variable: 'DB_USER'),
+                    string(credentialsId: 'db-password',    variable: 'DB_PASSWORD'),
+                    string(credentialsId: 's3-bucket-name', variable: 'S3_BUCKET_NAME')
+                ]) {
+                    sh '''
+                        docker run -d --name $CONTAINER_NAME \
+                          -p 5020:8000 \
+                          -e DB_HOST=$DB_HOST \
+                          -e DB_USER=$DB_USER \
+                          -e DB_PASSWORD=$DB_PASSWORD \
+                          -e DB_NAME=studentdb \
+                          -e S3_BUCKET_NAME=$S3_BUCKET_NAME \
+                          -e AWS_REGION=us-east-1 \
+                          -e AWS_DEFAULT_REGION=us-east-1 \
+                          $IMAGE_NAME
+                    '''
+                }
             }
         }
     }
